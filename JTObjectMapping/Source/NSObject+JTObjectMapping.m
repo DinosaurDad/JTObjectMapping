@@ -9,6 +9,8 @@
 #import "NSObject+JTObjectMapping.h"
 #import "JTMappings.h"
 #import "JTDateMappings.h"
+//#import "JTURLMappings.h"
+#import "JTMappingBlockWrapper.h"
 #import <objc/runtime.h>
 
 @implementation NSObject (JTObjectMapping)
@@ -51,6 +53,11 @@
                     } else {
                         [self setValue:obj forKey:mapsToValue];
                     }
+                } else if ([mapsToValue conformsToProtocol:@protocol(JTURLMappings)] && [(NSObject *)obj isKindOfClass:[NSString class]]) {
+                    // support turning NSString URLs to NSURL
+                    id<JTURLMappings> map = (id <JTURLMappings>)mapsToValue;
+                    NSURL *url = [NSURL URLWithString:obj];
+                    [self setValue:url forKey:map.key];
                 } else if ([mapsToValue conformsToProtocol:@protocol(JTSetMappings)] && [(NSObject *)obj isKindOfClass:[NSArray class]]) {
                     // support turning NSArrays into a NSSets
                     id <JTSetMappings> map = (id <JTSetMappings>)mapsToValue;
@@ -195,5 +202,13 @@
     return [JTDataMappings mappingWithKey:key usingEncoding:stringEncoding allowLossy:NO];
 }
 
+
+@end
+
+@implementation NSURL (JTURLMappings)
+
++ (id <JTURLMappings>)mappingWithKey:(NSString *)key {
+    return [JTURLMappings mappingWithKey:key];
+}
 
 @end

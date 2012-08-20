@@ -11,6 +11,7 @@
 #import "JTDateMappings.h"
 #import "JTSetMappings.h"
 #import "JTDataMappings.h"
+#import "JTURLMappings.h"
 
 @protocol JTValidJSONResponse <NSObject>
 @end
@@ -53,5 +54,11 @@
 + (id <JTDataMappings>)mappingWithKey:(NSString *)key usingEncoding:(NSStringEncoding)stringEncoding allowLossy:(BOOL)lossy;
 // convenience method
 + (id <JTDataMappings>)mappingWithKey:(NSString *)key usingEncoding:(NSStringEncoding)stringEncoding;
+
+@end
+
+@interface NSURL (JTURLMappings)
+
++ (id <JTURLMappings>)mappingWithKey:(NSString *)key;
 
 @end
