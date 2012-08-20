@@ -9,7 +9,7 @@
 #import "NSObject+JTObjectMapping.h"
 #import "JTMappings.h"
 #import "JTDateMappings.h"
-//#import "JTURLMappings.h"
+#import "JTURLMappings.h"
 #import "JTMappingBlockWrapper.h"
 #import <objc/runtime.h>
 
@@ -39,7 +39,13 @@
                 }
 
             } else {
-                if ([mapsToValue conformsToProtocol:@protocol(JTDataMappings)] && [(NSObject *)obj isKindOfClass:[NSString class]]) {
+                if ([mapsToValue isKindOfClass:[JTMappingBlockWrapper class]]) {
+                    id<JTMappings> mappings = [(JTMappingBlockWrapper *)mapsToValue execute:obj];
+                    NSObject *targetObject = [[mappings.targetClass alloc] init];
+                    [targetObject setValueFromDictionary:obj mapping:mappings.mapping];
+                    [self setValue:targetObject forKey:mappings.key];
+                    [targetObject release];
+                } else if ([mapsToValue conformsToProtocol:@protocol(JTDataMappings)] && [(NSObject *)obj isKindOfClass:[NSString class]]) {
                     // NSData mapping -- turn a string into NSData with the specified encoding
                     // (we must do this check before basic NSString mapping, or it'll be mapped as string instead of data)
                     id <JTDataMappings> map = (id <JTDataMappings>)mapsToValue;
