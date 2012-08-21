@@ -62,7 +62,10 @@
                 } else if ([mapsToValue conformsToProtocol:@protocol(JTURLMappings)] && [(NSObject *)obj isKindOfClass:[NSString class]]) {
                     // support turning NSString URLs to NSURL
                     id<JTURLMappings> map = (id <JTURLMappings>)mapsToValue;
-                    NSURL *url = [NSURL URLWithString:obj];
+                    NSURL *url = nil;
+                    if (obj && ![obj isKindOfClass:[NSNull class]]) {
+                        url = [NSURL URLWithString:obj];
+                    }
                     [self setValue:url forKey:map.key];
                 } else if ([mapsToValue conformsToProtocol:@protocol(JTSetMappings)] && [(NSObject *)obj isKindOfClass:[NSArray class]]) {
                     // support turning NSArrays into a NSSets
@@ -101,10 +104,11 @@
                         id<JTURLMappings> map = (id <JTURLMappings>)mapsToValue;
                         NSMutableArray *array = [NSMutableArray array];
                         for (NSObject *o in obj) {
-                            NSURL *url = [NSURL URLWithString:(NSString *)o];
-                            [array addObject:url];
+                            if (o && ![o isKindOfClass:[NSNull class]]) {
+                                NSURL *url = [NSURL URLWithString:(NSString *)o];
+                                [array addObject:url];
+                            }
                         }
-
                         [self setValue:array forKey:map.key];
                     } else {
                         NSMutableArray *array = [NSMutableArray array];
