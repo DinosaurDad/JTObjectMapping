@@ -97,6 +97,15 @@
                         id <JTMappings> mappings = (id <JTMappings>)mapsToValue;
                         NSObject *object = [mappings.targetClass objectFromJSONObject:obj mapping:mappings.mapping];
                         [self setValue:object forKey:mappings.key];
+                    } else if ([mapsToValue conformsToProtocol:@protocol(JTURLMappings)]) {
+                        id<JTURLMappings> map = (id <JTURLMappings>)mapsToValue;
+                        NSMutableArray *array = [NSMutableArray array];
+                        for (NSObject *o in obj) {
+                            NSURL *url = [NSURL URLWithString:(NSString *)o];
+                            [array addObject:url];
+                        }
+
+                        [self setValue:array forKey:map.key];
                     } else {
                         NSMutableArray *array = [NSMutableArray array];
                         for (NSObject *o in obj) {
