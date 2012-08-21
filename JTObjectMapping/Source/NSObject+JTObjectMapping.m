@@ -135,7 +135,26 @@
         // Only set the property value if we have one to set
         // otherwise this will crash for custom object mappings
         if (value != nil) {
-            [self setValue:value forKey:obj];
+            if ([obj conformsToProtocol:@protocol(JTURLMappings)]) {
+                id<JTURLMappings> map = (id <JTURLMappings>)obj;
+                NSURL *url = nil;
+                if ([value isKindOfClass:[NSArray class]]) {
+                    NSMutableArray *array = [NSMutableArray array];
+                    for (NSObject *o in value) {
+                        if (o && ![o isKindOfClass:[NSNull class]]) {
+                            NSURL *url = [NSURL URLWithString:(NSString *)o];
+                            [array addObject:url];
+                        }
+                    }
+                    [self setValue:array forKey:map.key];
+                }
+                else if (value && ![value isKindOfClass:[NSNull class]]) {
+                    url = [NSURL URLWithString:value];
+                }
+                [self setValue:url forKey:map.key];
+            } else {
+                [self setValue:value forKey:obj];
+            }
         }
     }];
 #endif
