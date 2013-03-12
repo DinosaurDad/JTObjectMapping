@@ -40,11 +40,25 @@
 
             } else {
                 if ([mapsToValue isKindOfClass:[JTMappingBlockWrapper class]]) {
-                    id<JTMappings> mappings = [(JTMappingBlockWrapper *)mapsToValue execute:obj];
-                    NSObject *targetObject = [[mappings.targetClass alloc] init];
-                    [targetObject setValueFromDictionary:obj mapping:mappings.mapping];
-                    [self setValue:targetObject forKey:mappings.key];
-                    [targetObject release];
+                    if ([(NSObject *)obj isKindOfClass:[NSArray class]]) {
+                      NSMutableArray *array = [NSMutableArray array];
+                      NSArray *objects = obj;
+                      for (id arrayObj in objects) {
+                        id<JTMappings> mappings = [(JTMappingBlockWrapper *)mapsToValue execute:arrayObj];
+                        NSObject *targetObject = [[mappings.targetClass alloc] init];
+                        [targetObject setValueFromDictionary:arrayObj mapping:mappings.mapping];
+                        [array addObject:targetObject];
+                        [targetObject release];
+                      }
+                      [self setValue:array forKey:[(JTMappingBlockWrapper *)mapsToValue key]];
+                    }
+                    else {
+                      id<JTMappings> mappings = [(JTMappingBlockWrapper *)mapsToValue execute:obj];
+                      NSObject *targetObject = [[mappings.targetClass alloc] init];
+                      [targetObject setValueFromDictionary:obj mapping:mappings.mapping];
+                      [self setValue:targetObject forKey:mappings.key];
+                      [targetObject release];
+                    }
                 } else if ([mapsToValue conformsToProtocol:@protocol(JTDataMappings)] && [(NSObject *)obj isKindOfClass:[NSString class]]) {
                     // NSData mapping -- turn a string into NSData with the specified encoding
                     // (we must do this check before basic NSString mapping, or it'll be mapped as string instead of data)
@@ -62,10 +76,7 @@
                 } else if ([mapsToValue conformsToProtocol:@protocol(JTURLMappings)] && [(NSObject *)obj isKindOfClass:[NSString class]]) {
                     // support turning NSString URLs to NSURL
                     id<JTURLMappings> map = (id <JTURLMappings>)mapsToValue;
-                    NSURL *url = nil;
-                    if (obj && ![obj isKindOfClass:[NSNull class]]) {
-                        url = [NSURL URLWithString:obj];
-                    }
+                    NSURL *url = [NSURL URLWithString:obj];
                     [self setValue:url forKey:map.key];
                 } else if ([mapsToValue conformsToProtocol:@protocol(JTSetMappings)] && [(NSObject *)obj isKindOfClass:[NSArray class]]) {
                     // support turning NSArrays into a NSSets
@@ -104,11 +115,10 @@
                         id<JTURLMappings> map = (id <JTURLMappings>)mapsToValue;
                         NSMutableArray *array = [NSMutableArray array];
                         for (NSObject *o in obj) {
-                            if (o && ![o isKindOfClass:[NSNull class]]) {
-                                NSURL *url = [NSURL URLWithString:(NSString *)o];
-                                [array addObject:url];
-                            }
+                            NSURL *url = [NSURL URLWithString:(NSString *)o];
+                            [array addObject:url];
                         }
+
                         [self setValue:array forKey:map.key];
                     } else {
                         NSMutableArray *array = [NSMutableArray array];
@@ -135,26 +145,7 @@
         // Only set the property value if we have one to set
         // otherwise this will crash for custom object mappings
         if (value != nil) {
-            if ([obj conformsToProtocol:@protocol(JTURLMappings)]) {
-                id<JTURLMappings> map = (id <JTURLMappings>)obj;
-                NSURL *url = nil;
-                if ([value isKindOfClass:[NSArray class]]) {
-                    NSMutableArray *array = [NSMutableArray array];
-                    for (NSObject *o in value) {
-                        if (o && ![o isKindOfClass:[NSNull class]]) {
-                            NSURL *url = [NSURL URLWithString:(NSString *)o];
-                            [array addObject:url];
-                        }
-                    }
-                    [self setValue:array forKey:map.key];
-                }
-                else if (value && ![value isKindOfClass:[NSNull class]]) {
-                    url = [NSURL URLWithString:value];
-                }
-                [self setValue:url forKey:map.key];
-            } else {
-                [self setValue:value forKey:obj];
-            }
+            [self setValue:value forKey:obj];
         }
     }];
 #endif
@@ -189,12 +180,12 @@
 
     // let objects do post-mapping validation, etc
     // (it's safe to call without checking respondsToSelector:, because we have an no-op method defined in this category)
-    [returnObject didMapObjectFromJSON];
+    [returnObject didMapObjectFromJSON:object];
     return returnObject;
 }
 
 // Override this in other classes to perform post-mapping validation/sanitization, etc.
-- (void)didMapObjectFromJSON {}
+- (void)didMapObjectFromJSON:(id<JTValidJSONResponse>)object {}
 
 @end
 

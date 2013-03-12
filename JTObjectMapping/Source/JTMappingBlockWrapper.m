@@ -10,17 +10,28 @@
 
 @implementation JTMappingBlockWrapper
 
-@synthesize mapperBlock, key;
+@synthesize mapperBlock = _mapperBlock;
+@synthesize key = _key;
+@synthesize targetClass = _targetClass;
+@synthesize mapping = _mapping;
+
 
 + (JTMappingBlockWrapper *)mappingWithKey:(NSString *)key withBlock:(JTMapperBlock)block {
     JTMappingBlockWrapper *wrapper = [[JTMappingBlockWrapper alloc] init];
     wrapper.mapperBlock = block;
     wrapper.key = key;
-    return wrapper;
+    return [wrapper autorelease];
 }
 
 - (id<JTMappings>)execute:(id)obj {
-    return mapperBlock(self.key ,obj);
+  return self.mapperBlock(self.key ,obj);
+}
+
+- (void)dealloc {
+    self.mapperBlock = nil;
+    self.key = nil;
+    self.mapping = nil;
+    [super dealloc];
 }
 
 @end
